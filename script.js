@@ -1,6 +1,10 @@
+
+
 document.addEventListener("DOMContentLoaded", () => {
     // Load saved tasks, goals, and books
     loadTasks();
+    loadBooks();
+    loadGoals();
 
     // Task Management
     const taskInput = document.getElementById("task-input");
@@ -22,6 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         taskInput.value = "";
         deadlineInput.value = "";
+
+        // Update XP and Streak
+        xp += 10;
+        updateXP();
+        streak++;
+        updateStreak();
     });
 
     function saveTask(taskObj) {
@@ -54,90 +64,102 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("tasks", JSON.stringify(tasks));
     }
 
-    // Progress Tracker
+    // Books Section
+    const bookInput = document.getElementById("book-input");
+    const bookList = document.getElementById("books");
+    const addBookButton = document.getElementById("add-book");
+
+    addBookButton.addEventListener("click", () => {
+        const bookText = bookInput.value.trim();
+        if (bookText === "") return;
+
+        saveBook(bookText);
+        addBookToUI(bookText);
+
+        bookInput.value = "";
+    });
+
+    function saveBook(book) {
+        let books = JSON.parse(localStorage.getItem("books")) || [];
+        books.push(book);
+        localStorage.setItem("books", JSON.stringify(books));
+    }
+
+    function loadBooks() {
+        let books = JSON.parse(localStorage.getItem("books")) || [];
+        books.forEach(book => addBookToUI(book));
+    }
+
+    function addBookToUI(book) {
+        const li = document.createElement("li");
+        li.innerHTML = `${book} <button class="remove-book">❌</button>`;
+        bookList.appendChild(li);
+
+        li.querySelector(".remove-book").addEventListener("click", () => {
+            removeBook(book);
+            li.remove();
+        });
+    }
+
+    function removeBook(book) {
+        let books = JSON.parse(localStorage.getItem("books")) || [];
+        books = books.filter(b => b !== book);
+        localStorage.setItem("books", JSON.stringify(books));
+    }
+
+    // Goals Section
+    const goalInput = document.getElementById("goal-input");
+    const goalList = document.getElementById("goals");
+    const addGoalButton = document.getElementById("add-goal");
+
+    addGoalButton.addEventListener("click", () => {
+        const goalText = goalInput.value.trim();
+        if (goalText === "") return;
+
+        saveGoal(goalText);
+        addGoalToUI(goalText);
+
+        goalInput.value = "";
+    });
+
+    function saveGoal(goal) {
+        let goals = JSON.parse(localStorage.getItem("goals")) || [];
+        goals.push(goal);
+        localStorage.setItem("goals", JSON.stringify(goals));
+    }
+
+    function loadGoals() {
+        let goals = JSON.parse(localStorage.getItem("goals")) || [];
+        goals.forEach(goal => addGoalToUI(goal));
+    }
+
+    function addGoalToUI(goal) {
+        const li = document.createElement("li");
+        li.innerHTML = `${goal} <button class="remove-goal">❌</button>`;
+        goalList.appendChild(li);
+
+        li.querySelector(".remove-goal").addEventListener("click", () => {
+            removeGoal(goal);
+            li.remove();
+        });
+    }
+
+    function removeGoal(goal) {
+        let goals = JSON.parse(localStorage.getItem("goals")) || [];
+        goals = goals.filter(g => g !== goal);
+        localStorage.setItem("goals", JSON.stringify(goals));
+    }
+
+    // XP System
     let xp = parseInt(localStorage.getItem("xp")) || 0;
     const xpDisplay = document.getElementById("xp-points");
-    const progressBar = document.getElementById("progress-bar");
-    const resetProgress = document.getElementById("reset-progress");
 
     function updateXP() {
         xpDisplay.textContent = `XP: ${xp}`;
-        progressBar.value = xp % 100;
         localStorage.setItem("xp", xp);
     }
 
-    addTaskButton.addEventListener("click", () => {
-        xp += 10;
-        updateXP();
-    });
-
-    resetProgress.addEventListener("click", () => {
-        xp = 0;
-        updateXP();
-    });
-
-    updateXP(); // Load XP on startup
-
-    // Motivational Quotes
-    const quotes = [
-        "Success is not final, failure is not fatal: It is the courage to continue that counts. - Churchill",
-        "Don't watch the clock; do what it does. Keep going. - Sam Levenson",
-        "You miss 100% of the shots you don’t take. - Wayne Gretzky"
-    ];
-    const quoteText = document.getElementById("quote-text");
-    const fetchQuote = document.getElementById("fetch-quote");
-
-    fetchQuote.addEventListener("click", () => {
-        const randomIndex = Math.floor(Math.random() * quotes.length);
-        quoteText.textContent = quotes[randomIndex];
-    });
-
-    // Reminder System
-    const reminderTimeInput = document.getElementById("reminder-time");
-    const setReminderButton = document.getElementById("set-reminder");
-    const reminderStatus = document.getElementById("reminder-status");
-
-    setReminderButton.addEventListener("click", () => {
-        const reminderTime = reminderTimeInput.value;
-        if (!reminderTime) {
-            reminderStatus.textContent = "No reminder set.";
-            return;
-        }
-        reminderStatus.textContent = `Reminder set for ${reminderTime}`;
-        setTimeout(() => {
-            alert("⏰ Time to focus on your tasks!");
-        }, getTimeDifference(reminderTime));
-    });
-
-    function getTimeDifference(time) {
-        const now = new Date();
-        const [hours, minutes] = time.split(":").map(Number);
-        const reminder = new Date();
-        reminder.setHours(hours, minutes, 0, 0);
-        return reminder - now;
-    }
-
-    // Daily Streak System
-    let streak = parseInt(localStorage.getItem("streak")) || 0;
-    const streakText = document.getElementById("streak-text");
-    const resetStreak = document.getElementById("reset-streak");
-
-    function updateStreak() {
-        streakText.textContent = `Current Streak: ${streak} Days`;
-        localStorage.setItem("streak", streak);
-    }
-
-    addTaskButton.addEventListener("click", () => {
-        streak++;
-        updateStreak();
-    });
-
-    resetStreak.addEventListener("click", () => {
-        streak = 0;
-        updateStreak();
-    });
-
-    updateStreak(); // Load streak on startup
+    updateXP();
 
     // Focus Mode
     let focusMode = localStorage.getItem("focusMode") === "true";
@@ -146,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateFocusMode() {
         focusStatus.textContent = focusMode ? "Focus Mode: ON" : "Focus Mode: OFF";
-        document.body.style.background = focusMode ? "#222" : "linear-gradient(135deg, #1b2a4e, #284e91)";
+        document.body.style.background = focusMode ? "#222" : "white";
         localStorage.setItem("focusMode", focusMode);
     }
 
@@ -155,10 +177,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateFocusMode();
     });
 
-    updateFocusMode(); // Load focus mode on startup
+    updateFocusMode();
 
     // Time Tracking
-    let startTime, endTime;
+    let startTime;
     const startTracking = document.getElementById("start-tracking");
     const stopTracking = document.getElementById("stop-tracking");
     const trackedTime = document.getElementById("tracked-time");
@@ -170,10 +192,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     stopTracking.addEventListener("click", () => {
         if (startTime) {
-            endTime = new Date();
+            let endTime = new Date();
             let timeSpent = Math.round((endTime - startTime) / 60000);
             trackedTime.textContent = `Total Time: ${Math.floor(timeSpent / 60)}h ${timeSpent % 60}m`;
         }
     });
-});
 
+    // Daily Streak System
+    let streak = parseInt(localStorage.getItem("streak")) || 0;
+    const streakText = document.getElementById("streak-text");
+
+    function updateStreak() {
+        streakText.textContent = `Current Streak: ${streak} Days`;
+        localStorage.setItem("streak", streak);
+    }
+
+    updateStreak();
+});
