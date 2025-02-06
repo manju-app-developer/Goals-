@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Load saved tasks, goals, and books
+    loadTasks();
+
     // Task Management
     const taskInput = document.getElementById("task-input");
     const deadlineInput = document.getElementById("deadline-input");
@@ -13,24 +16,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (taskText === "") return;
 
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${taskText}</strong> (${category}) <br> ⏳ Deadline: ${deadline} 
-                        <button class="remove-task">❌</button>`;
-        
-        taskList.appendChild(li);
+        const taskObj = { text: taskText, deadline, category };
+        saveTask(taskObj);
+        addTaskToUI(taskObj);
+
         taskInput.value = "";
         deadlineInput.value = "";
-
-        li.querySelector(".remove-task").addEventListener("click", () => {
-            li.remove();
-        });
     });
 
+    function saveTask(taskObj) {
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        tasks.push(taskObj);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        tasks.forEach(task => addTaskToUI(task));
+    }
+
+    function addTaskToUI(taskObj) {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${taskObj.text}</strong> (${taskObj.category}) <br> ⏳ Deadline: ${taskObj.deadline} 
+                        <button class="remove-task">❌</button>`;
+
+        taskList.appendChild(li);
+
+        li.querySelector(".remove-task").addEventListener("click", () => {
+            removeTask(taskObj.text);
+            li.remove();
+        });
+    }
+
+    function removeTask(taskText) {
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        tasks = tasks.filter(task => task.text !== taskText);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
     // Progress Tracker
-    let xp = 0;
+    let xp = parseInt(localStorage.getItem("xp")) || 0;
     const xpDisplay = document.getElementById("xp-points");
     const progressBar = document.getElementById("progress-bar");
     const resetProgress = document.getElementById("reset-progress");
+
+    function updateXP() {
+        xpDisplay.textContent = `XP: ${xp}`;
+        progressBar.value = xp % 100;
+        localStorage.setItem("xp", xp);
+    }
 
     addTaskButton.addEventListener("click", () => {
         xp += 10;
@@ -42,10 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateXP();
     });
 
-    function updateXP() {
-        xpDisplay.textContent = `XP: ${xp}`;
-        progressBar.value = xp % 100;
-    }
+    updateXP(); // Load XP on startup
 
     // Motivational Quotes
     const quotes = [
@@ -87,9 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Daily Streak System
-    let streak = 0;
+    let streak = parseInt(localStorage.getItem("streak")) || 0;
     const streakText = document.getElementById("streak-text");
     const resetStreak = document.getElementById("reset-streak");
+
+    function updateStreak() {
+        streakText.textContent = `Current Streak: ${streak} Days`;
+        localStorage.setItem("streak", streak);
+    }
 
     addTaskButton.addEventListener("click", () => {
         streak++;
@@ -101,20 +137,25 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStreak();
     });
 
-    function updateStreak() {
-        streakText.textContent = `Current Streak: ${streak} Days`;
-    }
+    updateStreak(); // Load streak on startup
 
     // Focus Mode
-    let focusMode = false;
+    let focusMode = localStorage.getItem("focusMode") === "true";
     const focusButton = document.getElementById("start-focus");
     const focusStatus = document.getElementById("focus-status");
 
-    focusButton.addEventListener("click", () => {
-        focusMode = !focusMode;
+    function updateFocusMode() {
         focusStatus.textContent = focusMode ? "Focus Mode: ON" : "Focus Mode: OFF";
         document.body.style.background = focusMode ? "#222" : "linear-gradient(135deg, #1b2a4e, #284e91)";
+        localStorage.setItem("focusMode", focusMode);
+    }
+
+    focusButton.addEventListener("click", () => {
+        focusMode = !focusMode;
+        updateFocusMode();
     });
+
+    updateFocusMode(); // Load focus mode on startup
 
     // Time Tracking
     let startTime, endTime;
@@ -135,3 +176,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
